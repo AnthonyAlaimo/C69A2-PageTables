@@ -136,16 +136,24 @@ char *find_physpage(addr_t vaddr, char type) {
 
 	// IMPLEMENTATION NEEDED
 	// Use top-level page directory to get pointer to 2nd-level page table
-	(void)idx; // To keep compiler happy - remove when you have a real use.
-
-
+	//(void)idx; // To keep compiler happy - remove when you have a real use.
+	//points to pte
+    pgdir_entry_t dirTable = pgdir[idx].init_second_level(); 
 	// Use vaddr to get index into 2nd-level page table and initialize 'p'
-
-
-
+    page2 = dirTable[vaddr]; 
+    //check if frame was allocated
 	// Check if p is valid or not, on swap or not, and handle appropriately
+    if (page2->frame == True){
+    	//increment hit count if valid
+    	if (PG_VALID){
+    		hit_count += 1;
+    	//check if page is ready to be swapped from harddisk
+    	}else if(PG_ONSWAP){
+    		int allocate = allocate_frame(page2);
+    	}
+    else{
 
-
+    }
 
 	// Make sure that p is marked valid and referenced. Also mark it
 	// dirty if the access type indicates that the page will be written to.
