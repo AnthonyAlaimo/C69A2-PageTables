@@ -145,35 +145,57 @@ char *find_physpage(addr_t vaddr, char type) {
 	pgtbl_entry_t *p_table = (pgtbl_entry_t*)((pgdir[idr].pde) & (PTRS_PER_PGTBL-1)); 
     p = p_table + PGTBL_INDEX(vaddr);
 	// Check if p is valid or not, on swap or not, and handle appropriately
-    if (PG_VALID){
+	if (PG_VALID){
+		//p is in our memory
     	hit_count += 1;
-    }else if(PG_ONSWAP){
-    	//allocate space for the frame and swap the in the page
-    	int allocate_frame = allocate_frame(p);
-    	//check if there is an offset in swap file
-    	int swap = swap_pagein(allocate, p->swap_offset);
-    	if (swap == 0){
-    		p->frame = p->frame | PG_ONSWAP;
-        	p->frame = p->frame & (~PG_DIRTY);
-    		p->frame = allocate_frame << PAGE_SHIFT;
-    	}else{
-    		return -EPERM;
-    	}
-    }
-    else{
-    	miss_count += 1;
-    }
-
+    }else{
+		// allocate space for the frame and swap the in the page
+		int allocate_frame = allocate_frame(p);
+	    if(PG_ONSWAP){
+	    	//check if there is an offset in swap file
+	    	int swap = swap_pagein(allocate, p->swap_offset);
+	    	if (swap == 0){
+	    		// p->frame = allocate_frame << PAGE_SHIFT;
+	    		// p->frame = p->frame | PG_ONSWAP;
+	      //   	p->frame = p->frame & (~PG_DIRTY);
+	    		performSwap(p, allocate_frame, false);
+	    	}else{
+	    		return -EPERM;
+	    	}
+	    }
+	    else{
+	    	//initializing the physical memory frame 
+	    	init_frame(allocate_frame, vaddr);
+	    	// p->frame = allocate_frame << PAGE_SHIFT;
+	    	// p->frame = p->frame | PG_ONSWAP;
+	     //    p->frame = p->frame & PG_DIRTY;
+	    	performSwap(p, allocate_frame, true);
+	    }
+	    //p is not in our memory
+	    miss_count += 1;
+	}
 	// Make sure that p is marked valid and referenced. Also mark it
 	// dirty if the access type indicates that the page will be written to.
-
-
-
+	p->frame = p->frame | PG_VALID
+	p->frame = p->frame | PG_REF
+	if ((type == "M") || (type == "S")){
+		p->frame = p->frame | PG_DIRTY;
+	}
 	// Call replacement algorithm's ref_fcn for this page
 	ref_fcn(p);
 
 	// Return pointer into (simulated) physical memory at start of frame
 	return  &physmem[(p->frame >> PAGE_SHIFT)*SIMPAGESIZE];
+}
+
+//helper if code crashes check here lol
+void performSwap(pgtbl_entry_t *p, int allocate_frame, bool isDirty){
+	p->frame = allocate_frame << PAGE_SHIFT;
+	p->frame = p->frame | PG_ONSWAP;
+	if(isDirty)
+		p->frame = p->frame & PG_DIRTY;
+	else
+		p->frame = p->frame & (~PG_DIRTY);
 }
 
 void print_pagetbl(pgtbl_entry_t *pgtbl) {
