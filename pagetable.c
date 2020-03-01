@@ -39,6 +39,29 @@ int allocate_frame(pgtbl_entry_t *p) {
 		// All frames were in use, so victim frame must hold some page
 		// Write victim page to swap, if needed, and update pagetable
 		// IMPLEMENTATION NEEDED
+		//pointer to page stored at the index of the physical page frame number 
+		pgtbl_entry_t *missing_frame = coremap[frame].pte;
+		//Swap victim page if page has been evicted
+		if (missing_frame->frame & PG_ONSWAP){
+			missing_frame->frame | PG_ONSWAP;
+		}
+		//swap page out and check if swap is valid
+		int swap = swap_pageout(missing_frame, missing_frame->swap_offset);
+		if (swap == 0){
+			missing_frame->swap_off = swap;
+		}else{
+			return -EPERM;
+		}
+		//Dealing with evict_dirty_count/evict_clean_count, so check if the 
+		//frame is DIRTY and increment counts accordingly
+		if (missing_frame->frame & PG_DIRTY){
+			evict_dirty_count += 1;
+		}else{
+			evict_clean_count += 1;
+		}
+		//set frame to not dirty and not valid (no longer in memory)
+		missing_frame->frame = missing_frame->frame & ~PG_DIRTY;
+		missing_frame->frame = missing_frame->frame & ~PG_VALID;
 
 
 	}
@@ -49,6 +72,7 @@ int allocate_frame(pgtbl_entry_t *p) {
 
 	return frame;
 }
+
 
 /*
  * Initializes the top-level pagetable.
@@ -178,6 +202,7 @@ char *find_physpage(addr_t vaddr, char type) {
 	// dirty if the access type indicates that the page will be written to.
 	p->frame = p->frame | PG_VALID
 	p->frame = p->frame | PG_REF
+	ref_count += 1;
 	if ((type == "M") || (type == "S")){
 		p->frame = p->frame | PG_DIRTY;
 	}
