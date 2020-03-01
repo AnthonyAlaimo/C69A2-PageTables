@@ -184,7 +184,7 @@ char *find_physpage(addr_t vaddr, char type) {
 	    		// p->frame = allocate_frame << PAGE_SHIFT;
 	    		// p->frame = p->frame | PG_ONSWAP;
 	      //   	p->frame = p->frame & (~PG_DIRTY);
-	    		performSwap(p, allocate_frame, false);
+	    		performSwap(p, allocate_frame, 0);
 	    	}else{
 	    		return -EPERM;
 	    	}
@@ -195,7 +195,7 @@ char *find_physpage(addr_t vaddr, char type) {
 	    	// p->frame = allocate_frame << PAGE_SHIFT;
 	    	// p->frame = p->frame | PG_ONSWAP;
 	     //    p->frame = p->frame & PG_DIRTY;
-	    	performSwap(p, allocate_frame, true);
+	    	performSwap(p, allocate_frame, 1);
 	    }
 	    //p is not in our memory
 	    miss_count += 1;
@@ -221,10 +221,10 @@ char *find_physpage(addr_t vaddr, char type) {
 }
 
 //helper if code crashes check here lol
-void performSwap(pgtbl_entry_t *p, int allocate_frame, bool isDirty){
+void performSwap(pgtbl_entry_t *p, int allocate_frame, int isDirty){
 	p->frame = allocate_frame << PAGE_SHIFT;
 	p->frame = p->frame | PG_ONSWAP;
-	if(isDirty)
+	if(isDirty==1)
 		p->frame = p->frame & PG_DIRTY;
 	else
 		p->frame = p->frame & (~PG_DIRTY);
