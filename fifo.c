@@ -17,8 +17,14 @@ extern struct frame *coremap;
  * for the page that is to be evicted.
  */
 int fifo_evict() {
-	
-	return 0;
+	// Set oldest element to evict
+	int toEvict = oldest;
+	// % is only effective in the case where oldest+1=memsize
+	int next_oldest = (oldest + 1) % memsize;
+	// Set next oldest to current oldest (now that we've evicted the oldest)
+	oldest = next_oldest;
+	// Return eviction index
+	return toEvict;
 }
 
 /* This function is called on each access to a page to update any information
@@ -28,10 +34,13 @@ int fifo_evict() {
 void fifo_ref(pgtbl_entry_t *p) {
 
 	return;
+	
 }
 
 /* Initialize any data structures needed for this 
  * replacement algorithm 
  */
 void fifo_init() {
+	
+	int oldest = 0;
 }
