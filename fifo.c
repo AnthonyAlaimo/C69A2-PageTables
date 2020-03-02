@@ -19,8 +19,13 @@ extern struct frame *coremap;
 int fifo_evict() {
 	// Set oldest element to evict
 	int toEvict = oldest;
-	// % is only effective in the case where oldest+1=memsize
-	int next_oldest = (oldest + 1) % memsize;
+	int next_oldest;
+	if (oldest == memsize){
+		next_oldest = 0;
+	}
+	else {
+		next_oldest = oldest + 1;
+	}
 	// Set next oldest to current oldest (now that we've evicted the oldest)
 	oldest = next_oldest;
 	// Return eviction index
