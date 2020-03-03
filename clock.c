@@ -20,11 +20,11 @@ extern struct frame *coremap;
  */
 
 int clock_evict() {
-	for (clock_position = 0; i < memsize; clock_position++){
+	for (clock_position = 0; clock_position < memsize; clock_position++){
 		//check if the frame is referenced or not
-		if (coremap[i].pte->frame & PG_REF){
+		if (coremap[clock_position].pte->frame & PG_REF){
 			//set reference to 0
-			coremap[i].pte->frame & (~PG_REF);
+			coremap[clock_position].pte->frame & (~PG_REF);
 		}else{
 			//evict page
 			return clock_position;
