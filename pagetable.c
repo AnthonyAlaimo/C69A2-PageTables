@@ -40,28 +40,34 @@ int allocate_frame(pgtbl_entry_t *p) {
 		// Write victim page to swap, if needed, and update pagetable
 		// IMPLEMENTATION NEEDED
 		//pointer to page stored at the index of the physical page frame number 
-		pgtbl_entry_t *vframe = coremap[frame].pte;
-		//Swap victim page if page has been evicted
-		if (vframe->frame & PG_ONSWAP){
-			vframe->frame | PG_ONSWAP;
-		}
-		//swap page out and check if swap is valid
-		int swap = swap_pageout(vframe, vframe->swap_off);
-		if (swap == 0){
-			vframe->swap_off = swap;
-		}else{
-			//fix error
-			return 0;
-		}
-		//Dealing with evict_dirty_count/evict_clean_count, so check if the 
-		//frame is DIRTY and increment counts accordingly
+		pgtbl_entry_t *vframe = coremap[frame].pte; 
+		
 		if (vframe->frame & PG_DIRTY){
+			//swap page out and check if swap is valid
+			int swap = swap_pageout(frame, vframe->swap_off);
+			if (swap != INVALID_SWAP){
+				vframe->frame = vframe->swap_off = swap;
+				//if (vframe->frame & PG_ONSWAP){
+				vframe->frame = vframe->frame | PG_ONSWAP;
+				//}
+
+				//Dealing with evict_dirty_count/evict_clean_count, so check if the 
+				//frame is DIRTY and increment counts accordingly
+		
+				//set frame to not dirty and not valid (no longer in memory)
+				vframe->frame = vframe->frame & ~PG_DIRTY;
+
+			}else{
+				//fix error
+				perror("Bad swap");
+				exit(1);
+			}			
 			evict_dirty_count += 1;
 		}else{
 			evict_clean_count += 1;
 		}
-		//set frame to not dirty and not valid (no longer in memory)
-		vframe->frame = vframe->frame & ~PG_DIRTY;
+		//Swap victim page if page has been evicted yeah
+		
 		vframe->frame = vframe->frame & ~PG_VALID;
 
 
@@ -170,15 +176,15 @@ char *find_physpage(addr_t vaddr, char type) {
 
 	// FIXED TYPO: pgdir[idr] --> pgdir[idx]
 	pgtbl_entry_t *p_table = (pgtbl_entry_t*)((pgdir[idx].pde) & (PAGE_MASK)); 
-    p = p_table + PGTBL_INDEX(vaddr);
+    	p = p_table + PGTBL_INDEX(vaddr);
 	// Check if p is valid or not, on swap or not, and handle appropriately
 	if (p->frame & PG_VALID){
 		//p is in our memory
-    	hit_count += 1;
+    		hit_count += 1;
     }else{
 		// allocate space for the frame and swap the in the page
 		int allocate = allocate_frame(p);
-	    if(PG_ONSWAP){
+	    if(p->frame & PG_ONSWAP){
 	    	//check if there is an offset in swap file
 	    	int swap = swap_pagein(allocate, p->swap_off);
 	    	if (swap == 0){
@@ -188,7 +194,9 @@ char *find_physpage(addr_t vaddr, char type) {
 	    		// performSwap(p, allocate, 0);
 	    	}else{
 	    		//fix error
-	    		return 0;
+	    		perror("Swap error");
+			exit(1);
+
 	    	}
 	    }
 	    else{
@@ -212,9 +220,9 @@ char *find_physpage(addr_t vaddr, char type) {
 		p->frame = p->frame | PG_DIRTY;
 	}
 
-	// if ((type == "M") || (type == "S")){
-	// 	p->frame = p->frame | PG_DIRTY;
-	// }
+	//if ((type == "M") || (type == "S")){
+	 	//p->frame = p->frame | PG_DIRTY;
+	//}
 	// Call replacement algorithm's ref_fcn for this page
 	ref_fcn(p);
 
