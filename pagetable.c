@@ -169,10 +169,10 @@ char *find_physpage(addr_t vaddr, char type) {
 	// adding space for vaddr to page table
 
 	// FIXED TYPO: pgdir[idr] --> pgdir[idx]
-	pgtbl_entry_t *p_table = (pgtbl_entry_t*)((pgdir[idx].pde) & (PTRS_PER_PGTBL-1)); 
+	pgtbl_entry_t *p_table = (pgtbl_entry_t*)((pgdir[idx].pde) & (PAGE_MASK)); 
     p = p_table + PGTBL_INDEX(vaddr);
 	// Check if p is valid or not, on swap or not, and handle appropriately
-	if (PG_VALID){
+	if (p->frame PG_VALID){
 		//p is in our memory
     	hit_count += 1;
     }else{
