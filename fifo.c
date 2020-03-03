@@ -23,7 +23,7 @@ int fifo_evict() {
 	// Set oldest element to evict
 	int toEvict = oldest;
 	int next_oldest;
-	if (oldest == memsize){
+	if (oldest == memsize-1){
 		next_oldest = 0;
 	}
 	else {
