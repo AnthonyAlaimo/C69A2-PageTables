@@ -10,7 +10,7 @@ extern int memsize;
 
 extern int debug;
 
-extern int clock_position;
+int clock_position;
 
 extern struct frame *coremap;
 
