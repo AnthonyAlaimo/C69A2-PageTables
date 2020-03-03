@@ -17,7 +17,7 @@ extern struct frame *coremap;
  * for the page that is to be evicted.
  */
 
-int oldest = 0;
+extern int oldest;
 
 int fifo_evict() {
 	// Set oldest element to evict
@@ -49,5 +49,5 @@ void fifo_ref(pgtbl_entry_t *p) {
  * replacement algorithm 
  */
 void fifo_init() {
-
+	oldest = 0;
 }
