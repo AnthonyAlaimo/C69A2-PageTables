@@ -40,28 +40,29 @@ int allocate_frame(pgtbl_entry_t *p) {
 		// Write victim page to swap, if needed, and update pagetable
 		// IMPLEMENTATION NEEDED
 		//pointer to page stored at the index of the physical page frame number 
-		pgtbl_entry_t *missing_frame = coremap[frame].pte;
+		pgtbl_entry_t *vframe = coremap[frame].pte;
 		//Swap victim page if page has been evicted
-		if (missing_frame->frame & PG_ONSWAP){
-			missing_frame->frame | PG_ONSWAP;
+		if (vframe->frame & PG_ONSWAP){
+			vframe->frame | PG_ONSWAP;
 		}
 		//swap page out and check if swap is valid
-		int swap = swap_pageout(missing_frame, missing_frame->swap_offset);
+		int swap = swap_pageout(vframe, vframe->swap_off);
 		if (swap == 0){
-			missing_frame->swap_off = swap;
+			vframe->swap_off = swap;
 		}else{
-			return -EPERM;
+			//fix error
+			return 0;
 		}
 		//Dealing with evict_dirty_count/evict_clean_count, so check if the 
 		//frame is DIRTY and increment counts accordingly
-		if (missing_frame->frame & PG_DIRTY){
+		if (vframe->frame & PG_DIRTY){
 			evict_dirty_count += 1;
 		}else{
 			evict_clean_count += 1;
 		}
 		//set frame to not dirty and not valid (no longer in memory)
-		missing_frame->frame = missing_frame->frame & ~PG_DIRTY;
-		missing_frame->frame = missing_frame->frame & ~PG_VALID;
+		vframe->frame = vframe->frame & ~PG_DIRTY;
+		vframe->frame = vframe->frame & ~PG_VALID;
 
 
 	}
@@ -176,26 +177,27 @@ char *find_physpage(addr_t vaddr, char type) {
     	hit_count += 1;
     }else{
 		// allocate space for the frame and swap the in the page
-		int allocate_frame = allocate_frame(p);
+		int allocate = allocate_frame(p);
 	    if(PG_ONSWAP){
 	    	//check if there is an offset in swap file
-	    	int swap = swap_pagein(allocate, p->swap_offset);
+	    	int swap = swap_pagein(allocate, p->swap_off);
 	    	if (swap == 0){
-	    		// p->frame = allocate_frame << PAGE_SHIFT;
-	    		// p->frame = p->frame | PG_ONSWAP;
-	      //   	p->frame = p->frame & (~PG_DIRTY);
-	    		performSwap(p, allocate_frame, 0);
+	    		p->frame = allocate << PAGE_SHIFT;
+	    		p->frame = p->frame | PG_ONSWAP;
+	        	p->frame = p->frame & (~PG_DIRTY);
+	    		// performSwap(p, allocate, 0);
 	    	}else{
-	    		return -EPERM;
+	    		//fix error
+	    		return 0;
 	    	}
 	    }
 	    else{
 	    	//initializing the physical memory frame 
-	    	init_frame(allocate_frame, vaddr);
-	    	// p->frame = allocate_frame << PAGE_SHIFT;
-	    	// p->frame = p->frame | PG_ONSWAP;
-	     //    p->frame = p->frame & PG_DIRTY;
-	    	performSwap(p, allocate_frame, 1);
+	    	init_frame(allocate, vaddr);
+	    	p->frame = allocate << PAGE_SHIFT;
+	    	p->frame = p->frame | PG_ONSWAP;
+	        p->frame = p->frame & PG_DIRTY;
+	    	// performSwap(p, allocate, 1);
 	    }
 	    //p is not in our memory
 	    miss_count += 1;
@@ -221,14 +223,14 @@ char *find_physpage(addr_t vaddr, char type) {
 }
 
 //helper if code crashes check here lol
-void performSwap(pgtbl_entry_t *p, int allocate_frame, int isDirty){
-	p->frame = allocate_frame << PAGE_SHIFT;
-	p->frame = p->frame | PG_ONSWAP;
-	if(isDirty==1)
-		p->frame = p->frame & PG_DIRTY;
-	else
-		p->frame = p->frame & (~PG_DIRTY);
-}
+// void performSwap(pgtbl_entry_t *p, int allocate, int isDirty){
+// 	p->frame = allocate << PAGE_SHIFT;
+// 	p->frame = p->frame | PG_ONSWAP;
+// 	if(isDirty==1)
+// 		p->frame = p->frame & PG_DIRTY;
+// 	else
+// 		p->frame = p->frame & (~PG_DIRTY);
+// }
 
 void print_pagetbl(pgtbl_entry_t *pgtbl) {
 	int i;
