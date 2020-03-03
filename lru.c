@@ -12,14 +12,44 @@ extern int debug;
 
 extern struct frame *coremap;
 
+//linked list to keep track of pages  
+typedef struct linked_list{
+	int frame;
+	struct linked_list *next_node;
+}node;
+
+node *head;
 /* Page to evict is chosen using the accurate LRU algorithm.
  * Returns the page frame number (which is also the index in the coremap)
  * for the page that is to be evicted.
  */
 
 int lru_evict() {
-	
-	return 0;
+	int toEvict;
+	node *curr = head;
+	node *prev =  NULL;
+	//vframe = head->frame
+	// SIZE = 0
+	if (head == NULL){
+		// do something
+		perror("No head");
+	}
+	// Size == 1
+	if(curr-> next_node == NULL){
+		head = NULL;
+		toEvict = curr->frame;
+		free(curr);
+		return toEvict;
+	} 
+	// Size > 1
+	while (curr->next_node != NULL){
+		prev = curr;
+		curr = curr->next_node;
+	}
+	prev->next_node = NULL; 
+	toEvict = curr->frame;
+	free(curr);
+	return toEvict;
 }
 
 /* This function is called on each access to a page to update any information
@@ -27,7 +57,22 @@ int lru_evict() {
  * Input: The page table entry for the page that is being accessed.
  */
 void lru_ref(pgtbl_entry_t *p) {
+	node *curr = head;
 
+	while (curr != NULL){
+		if (curr->frame == p->frame){
+			return;
+		}
+		else{
+			curr = curr->next_node;
+		}
+	}
+
+	int f = p->frame;
+	node *new = (node*)malloc(sizeof(node));
+	new->frame = f;
+	new->next_node = head;
+	head = new;
 	return;
 }
 
@@ -36,4 +81,5 @@ void lru_ref(pgtbl_entry_t *p) {
  * replacement algorithm 
  */
 void lru_init() {
+	head = NULL;
 }

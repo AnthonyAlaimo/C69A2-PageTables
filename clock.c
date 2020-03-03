@@ -24,7 +24,7 @@ int clock_evict() {
 		//check if the frame is referenced or not
 		if (coremap[clock_position].pte->frame & PG_REF){
 			//set reference to 0
-			coremap[clock_position].pte->frame & (~PG_REF);
+			coremap[clock_position].pte->frame = coremap[clock_position].pte->frame & (~PG_REF);
 		}else{
 			//evict page
 			return clock_position;
