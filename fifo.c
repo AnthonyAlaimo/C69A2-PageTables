@@ -17,7 +17,7 @@ extern struct frame *coremap;
  * for the page that is to be evicted.
  */
 
-extern int oldest;
+int oldest;
 
 int fifo_evict() {
 	// Set oldest element to evict
