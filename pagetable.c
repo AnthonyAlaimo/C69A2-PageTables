@@ -172,7 +172,7 @@ char *find_physpage(addr_t vaddr, char type) {
 	pgtbl_entry_t *p_table = (pgtbl_entry_t*)((pgdir[idx].pde) & (PAGE_MASK)); 
     p = p_table + PGTBL_INDEX(vaddr);
 	// Check if p is valid or not, on swap or not, and handle appropriately
-	if (p->frame PG_VALID){
+	if (p->frame & PG_VALID){
 		//p is in our memory
     	hit_count += 1;
     }else{
