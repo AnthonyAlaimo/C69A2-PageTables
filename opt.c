@@ -83,7 +83,7 @@ void opt_init() {
 	FILE* trace_file;
 	// opens attepmt to read the file, if fails throw a p error
 	if(!(trace_file = fopen(tracefile, "r"))) {
-		perror("frace file does not exist");
+		perror("trace file does not working when opening");
 		exit(1);
 	}
 
