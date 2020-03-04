@@ -12,15 +12,16 @@ extern int debug;
 
 extern struct frame *coremap;
 
+int ref_count;
 //linked list to keep track of pages  
-typedef struct linked_list{
-	int frame;
-	struct linked_list *next_node;
-	struct linked_list *prev_node;
-}node;
+// typedef struct linked_list{
+// 	int frame;
+// 	struct linked_list *next_node;
+// 	struct linked_list *prev_node;
+// }node;
 
-node *head;
-node *tail;
+// node *head;
+// node *tail;
 /* Page to evict is chosen using the accurate LRU algorithm.
  * Returns the page frame number (which is also the index in the coremap)
  * for the page that is to be evicted.
@@ -52,24 +53,38 @@ int lru_evict() {
 	// toEvict = curr->frame;
 	// free(curr);
 	// return toEvict;
-	int toEvict;
-	if (tail == NULL){
-		// do something
-		if (head == NULL){
-			perror("No nodes");
-			exit(1);
-		}
-		toEvict = head->frame;
-		free(head);
-		return toEvict;
+	// int toEvict;
+	// if (tail == NULL){
+	// 	// do something
+	// 	if (head == NULL){
+	// 		perror("No nodes");
+	// 		exit(1);
+	// 	}
+	// 	toEvict = head->frame;
+	// 	free(head);
+	// 	return toEvict;
 		
-	}
-	node *evictTail = tail;
-	tail = evictTail->prev_node;
-	tail->next_node = NULL;
-	toEvict = evictTail->frame;
-	free(evictTail);
-	return(toEvict);
+	// }
+	// node *evictTail = tail;
+	// tail = evictTail->prev_node;
+	// tail->next_node = NULL;
+	// toEvict = evictTail->frame;
+	// free(evictTail);
+	// return(toEvict);
+
+    int min_ref= coremap[0].pte->ref_count;;
+    int output= 0;
+    int i = 0;
+    while(i<memsize){
+    	if(i > 0 && coremap[i].pte->ref_count <min_ref){
+    		min_ref = coremap[i].pte->ref_count;
+    		output = i;
+    	}
+    	i += 1;
+    }
+    return output;
+
+
 
 }
 
@@ -78,31 +93,34 @@ int lru_evict() {
  * Input: The page table entry for the page that is being accessed.
  */
 void lru_ref(pgtbl_entry_t *p) {
-	node *curr = head;
+	// node *curr = head;
 
-	while (curr != NULL){
-		if (curr->frame == p->frame){
-			return;
-		}
-		else{
-			curr = curr->next_node;
-		}
-	}
+	// while (curr != NULL){
+	// 	if (curr->frame == p->frame){
+	// 		return;
+	// 	}
+	// 	else{
+	// 		curr = curr->next_node;
+	// 	}
+	// }
 
 
-	int f = p->frame;
-	node *new = (node*)malloc(sizeof(node));
-	new->frame = f;
-	new->next_node = head;
-	if (head==NULL){
-		;
-	}
-	else {
-		head->prev_node = new;
-	}
-	new->prev_node = NULL;
-	head = new;
-	return;
+	// int f = p->frame;
+	// node *new = (node*)malloc(sizeof(node));
+	// new->frame = f;
+	// new->next_node = head;
+	// if (head==NULL){
+	// 	;
+	// }
+	// else {
+	// 	head->prev_node = new;
+	// }
+	// new->prev_node = NULL;
+	// head = new;
+	// return;
+
+	p->ref_count = ref_count;
+	ref_count += 1; 
 }
 
 
@@ -110,6 +128,7 @@ void lru_ref(pgtbl_entry_t *p) {
  * replacement algorithm 
  */
 void lru_init() {
-	head = NULL;
-	tail = NULL;
+	//head = NULL;
+	//tail = NULL;
+	ref_count = 0;
 }
