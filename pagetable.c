@@ -207,6 +207,8 @@ char *find_physpage(addr_t vaddr, char type) {
 	        p->frame = p->frame & PG_DIRTY;
 	    	// performSwap(p, allocate, 1);
 	    }
+	    //setting address var for OPT algorithms
+	    coremap[allocate].address = vaddr;
 	    //p is not in our memory
 	    miss_count += 1;
 	}
