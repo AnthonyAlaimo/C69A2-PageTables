@@ -31,12 +31,14 @@ int opt_evict() {
 	int found;
 	int address_cell;
 	int j;
+	// loops through to find when the current nodes address is equal to the coremap address 
 	while(i < memsize) {
 			found = 0;
 			j = 0;
 			address_cell = 0;
 			node *curr = head;
 			while (curr != NULL) {
+				// if found we exit the loop and store it in address_cell
 				if (curr->address == coremap[i].address) {
 					address_cell = j;
 					found = 1;
@@ -45,17 +47,14 @@ int opt_evict() {
 				j++;
 				curr = curr->next_node;
 			}
-
-
-		// If the frame will never appear again, just return it
+			// if not found return i
 			if (found == 0) {
 				return i;
 			} else if (address_cell > max) {
 				output = i;
 				max = address_cell;
 			}
-
-			i = i+1;
+			i++;
 	}
 
 	return output;
@@ -66,8 +65,10 @@ int opt_evict() {
  * Input: The page table entry for the page that is being accessed.
  */
 void opt_ref(pgtbl_entry_t *p) {
+	// removes the head of the list
 	node *cur = head;
-	head = head->next_node;
+	node *new_head = cur->next_node;
+	head = new_head;
 	free(cur);
 }
 
@@ -75,34 +76,32 @@ void opt_ref(pgtbl_entry_t *p) {
  * replacement algorithm.
  */
 void opt_init() {
+	// code used from the sim.c program, used to read the trace files
 	char buf[MAXLINE];
 	addr_t vaddr = 0;
 	char type;
 	FILE* trace_file;
-
-	if(( trace_file= fopen(tracefile, "r")) == NULL) {
+	// opens attepmt to read the file, if fails throw a p error
+	if(!(trace_file = fopen(tracefile, "r"))) {
 		perror("frace file does not exist");
 		exit(1);
 	}
 
 	node *prev_node;
-
-	// Load in the tracefile using modified same code via sim.c
 	while(fgets(buf, MAXLINE, trace_file) != NULL) {
 		if(buf[0] != '=') {
 			sscanf(buf, "%c %lx", &type, &vaddr);
-
+			// allocates memeory for the new node
 			node *new_trace = (node*) malloc(sizeof(node));
 			new_trace->address = vaddr;
 			new_trace->next_node = NULL;
-
-			// If it's the first trace read, it's now the head of LL
-			if (head != NULL) {
+			// if the head is null, we set the new node as the head
+			if (head == NULL) {
 				head = new_trace;
 			} else {
+				// otherwise, we add it to the list
 				prev_node->next_node = new_trace;
 			}
-
 			prev_node = new_trace;
 		} else {
 			continue;
