@@ -25,16 +25,17 @@ node *head;
  * for the page that is to be evicted.
  */
 int opt_evict() {
-	int found = 0;
 	int i=0;
 	int output = -1;
 	int max = -1;
-	int address_cell  = 0;
-	int j = 0;
+	int found;
+	int address_cell;
+	int j;
 	while(i < memsize) {
-			
+			found = 0;
+			j = 0;
+			address_cell = 0;
 			node *curr = head;
-
 			while (curr != NULL) {
 				if (curr->address == coremap[i].address) {
 					address_cell = j;
@@ -54,7 +55,7 @@ int opt_evict() {
 				max = address_cell;
 			}
 
-	 i = i+1;
+			i = i+1;
 	}
 
 	return output;
@@ -68,7 +69,6 @@ void opt_ref(pgtbl_entry_t *p) {
 	node *cur = head;
 	head = head->next_node;
 	free(cur);
-	return;
 }
 
 /* Initializes any data structures needed for this
