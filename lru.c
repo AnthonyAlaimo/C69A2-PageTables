@@ -89,11 +89,17 @@ void lru_ref(pgtbl_entry_t *p) {
 		}
 	}
 
+
 	int f = p->frame;
 	node *new = (node*)malloc(sizeof(node));
 	new->frame = f;
 	new->next_node = head;
-	head->prev_node = new;
+	if (head==NULL){
+		;
+	}
+	else {
+		head->prev_node = new;
+	}
 	new->prev_node = NULL;
 	head = new;
 	return;
